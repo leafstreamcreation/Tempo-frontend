@@ -1,0 +1,72 @@
+/* Tempo App Styles */
+
+.font-heading {
+    font-family: 'Manrope', sans-serif;
+}
+
+.font-body {
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* Task status borders */
+.task-border-overdue {
+    border-left: 4px solid #9F1239;
+}
+
+.task-border-urgent {
+    border-left: 4px solid #EF4444;
+}
+
+.task-border-soon {
+    border-left: 4px solid #F59E0B;
+}
+
+.task-border-safe {
+    border-left: 4px solid #10B981;
+}
+
+/* Pulse animation for overdue tasks */
+.animate-pulse-overdue {
+    animation: pulse-overdue 2s ease-in-out infinite;
+}
+
+/* Smooth page transitions */
+.page-enter {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Mobile-first bottom navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
