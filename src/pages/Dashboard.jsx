@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import api from '@/lib/api';
+import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -190,7 +190,7 @@ export default function Dashboard() {
 
   var fetchTasks = useCallback(async function() {
     try {
-      var res// = await api.get('/tasks');
+      var res = await api.get('/tasks');
       setTasks(res.data);
     } catch (e) {
       console.error(e);

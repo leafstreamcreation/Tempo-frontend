@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-// import api from '@/lib/api';
+import api from '../lib/api';
 
 export default function AuthPage() {
   const { login, register } = useAuth();
@@ -21,11 +21,11 @@ export default function AuthPage() {
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' });
 
   useEffect(() => {
-    // api.get('/auth/signup-allowed').then(function(res) {
-    //   setSignupAllowed(res.data.allowed);
-    // }).catch(function() {
-    //   setSignupAllowed(false);
-    // });
+    api.get('/auth/signup-allowed').then(function(res) {
+      setSignupAllowed(res.data.allowed);
+    }).catch(function() {
+      setSignupAllowed(false);
+    });
   }, []);
 
   const handleLogin = async (e) => {

@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label.jsx';
 import { Card, CardContent, CardHeader } from '../components/ui/card.jsx';
 import { toast } from 'sonner';
 import { Loader2, AlertCircle, Mail } from 'lucide-react';
-// import api from '@/lib/api';
+import api from '../lib/api';
 
 export default function InviteSignupPage() {
   var params = useParams();
@@ -37,13 +37,13 @@ export default function InviteSignupPage() {
   var setForm = formState[1];
 
   useEffect(function() {
-    // api.get('/auth/invite/' + inviteToken).then(function(res) {
-    //   setInvite(res.data);
-    //   setValidating(false);
-    // }).catch(function(err) {
-    //   setError(err.response?.data?.detail || 'Invalid or expired invitation');
-    //   setValidating(false);
-    // });
+    api.get('/auth/invite/' + inviteToken).then(function(res) {
+      setInvite(res.data);
+      setValidating(false);
+    }).catch(function(err) {
+      setError(err.response?.data?.detail || 'Invalid or expired invitation');
+      setValidating(false);
+    });
   }, [inviteToken]);
 
   var handleSubmit = async function(e) {

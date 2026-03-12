@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// import api from '@/lib/api';
+import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.jsx';
 import { Button } from '../components/ui/button.jsx';
@@ -152,8 +152,8 @@ export default function AdminPage() {
   var fetchData = useCallback(async function() {
     try {
       var results = await Promise.all([
-        // api.get('/admin/users'),
-        // api.get('/admin/invitations'),
+        api.get('/admin/users'),
+        api.get('/admin/invitations'),
       ]);
       setUsers(results[0].data);
       setInvites(results[1].data);
@@ -183,7 +183,7 @@ export default function AdminPage() {
     if (!inviteEmail.trim()) { toast.error('Email is required'); return; }
     setSending(true);
     try {
-      // var res = await api.post('/admin/invite', { email: inviteEmail.trim() });
+      var res = await api.post('/admin/invite', { email: inviteEmail.trim() });
       var link = window.location.origin + '/invite/' + res.data.token;
       copyToClipboard(link);
       toast.success('Invitation created!');
@@ -203,7 +203,7 @@ export default function AdminPage() {
 
   var handleToggleAdmin = async function(userId) {
     try {
-      // var res = await api.put('/admin/users/' + userId + '/toggle-admin');
+      var res = await api.put('/admin/users/' + userId + '/toggle-admin');
       var newStatus = res.data.is_admin ? 'admin' : 'member';
       toast.success('User is now ' + newStatus);
       fetchData();
@@ -215,7 +215,7 @@ export default function AdminPage() {
   var handleDeleteUser = async function() {
     if (!deletingUser) return;
     try {
-      // await api.delete('/admin/users/' + deletingUser.id);
+      await api.delete('/admin/users/' + deletingUser.id);
       toast.success('User deleted');
       setDeleteOpen(false);
       setDeletingUser(null);
@@ -227,7 +227,7 @@ export default function AdminPage() {
 
   var handleRevokeInvite = async function(inviteId) {
     try {
-      // await api.delete('/admin/invitations/' + inviteId);
+      await api.delete('/admin/invitations/' + inviteId);
       toast.success('Invitation revoked');
       fetchData();
     } catch (err) {

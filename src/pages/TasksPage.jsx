@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-// import api from '@/lib/api';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import api from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -138,7 +138,7 @@ function TaskItem({ taskId, title, description, intervalDays, nextDue, completio
   );
 }
 
-function TagBadgeList({ tags, onDeleteTag }) {
+function TagBadgeList({ tags, selectedTags, onSelectTag }) {
   if (tags.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2" data-testid="tags-list">
@@ -146,21 +146,13 @@ function TagBadgeList({ tags, onDeleteTag }) {
         return (
           <Badge
             key={tag.id}
-            variant="secondary"
-            className="rounded-full font-body text-xs flex items-center gap-1 pr-1"
+            variant={selectedTags.includes(tag.id) ? 'default' : 'secondary'}
+            className="rounded-full font-body text-xs flex items-center gap-1 px-2"
             style={{ borderColor: tag.color, borderWidth: '1px' }}
-            data-testid={'tag-badge-' + tag.name}
+            data-testid={'tag-badge-' + tag.name}onClick={function() { onSelectTag(tag.id); }}
           >
             <span className="w-2 h-2 rounded-full mr-0.5" style={{ backgroundColor: tag.color }} />
             {tag.name}
-            <button
-              onClick={function() { onDeleteTag(tag.id); }}
-              className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
-              aria-label={'Delete tag ' + tag.name}
-              data-testid={'delete-tag-' + tag.name}
-            >
-              <X className="w-3 h-3" />
-            </button>
           </Badge>
         );
       })}
@@ -224,12 +216,32 @@ export default function TasksPage() {
   var formState = useState({ title: '', description: '', interval_days: 7, tags: [], is_shared: false });
   var form = formState[0];
   var setForm = formState[1];
+  var selectedTagsState = useState([]);
+  var selectedTags = selectedTagsState[0];
+  var setSelectedTags = selectedTagsState[1];
+  var filteredTasks = useMemo(function() {
+    if (selectedTags.length === 0) return tasks;
+    const tagDict = {};
+    tags.forEach(function(tag) {
+      tagDict[tag.id] = tag.name;
+    });
+    return tasks.filter(function(task) {
+      for(var id of selectedTags) {
+        for(var name of task.tags) {
+          if (name === tagDict[id]) {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+  }, [tasks, selectedTags]);
 
   var fetchData = useCallback(async function() {
     try {
       var results = await Promise.all([
-        // api.get('/tasks'), 
-        // api.get('/tags')
+        api.get('/tasks'), 
+        api.get('/tags')
       ]);
       setTasks(results[0].data);
       setTags(results[1].data);
@@ -265,10 +277,10 @@ export default function TasksPage() {
     setSaving(true);
     try {
       if (editingTask) {
-        // await api.put('/tasks/' + editingTask.id, { title: form.title, description: form.description, interval_days: form.interval_days, tags: form.tags });
+        await api.put('/tasks/' + editingTask.id, { title: form.title, description: form.description, interval_days: form.interval_days, tags: form.tags });
         toast.success('Task updated');
       } else {
-        // await api.post('/tasks', form);
+        await api.post('/tasks', form);
         toast.success('Task created');
       }
       setDialogOpen(false);
@@ -282,7 +294,7 @@ export default function TasksPage() {
 
   var handleToggleShared = async function(taskId) {
     try {
-      var res // = await api.post('/tasks/' + taskId + '/toggle-shared');
+      var res = await api.post('/tasks/' + taskId + '/toggle-shared');
       var newStatus = res.data.is_shared;
       toast.success(newStatus ? 'Task is now shared with everyone' : 'Task is now personal');
       fetchData();
@@ -294,7 +306,7 @@ export default function TasksPage() {
   var handleDelete = async function() {
     if (!deletingTask) return;
     try {
-      // await api.delete('/tasks/' + deletingTask.id);
+      await api.delete('/tasks/' + deletingTask.id);
       toast.success('Task deleted');
       setDeleteDialogOpen(false);
       setDeletingTask(null);
@@ -318,9 +330,9 @@ export default function TasksPage() {
     if (!newTagName.trim()) return;
     try {
       var color = TAG_COLORS[tags.length % TAG_COLORS.length];
-      // await api.post('/tags', { name: newTagName.trim(), color: color });
+      await api.post('/tags', { name: newTagName.trim(), color: color });
       setNewTagName('');
-       var res // = await api.get('/tags');
+       var res = await api.get('/tags');
       setTags(res.data);
       toast.success('Tag created');
     } catch (err) {
@@ -328,15 +340,21 @@ export default function TasksPage() {
     }
   };
 
-  var deleteTag = async function(tagId) {
-    try {
-      // await api.delete('/tags/' + tagId);
-      var res // = await api.get('/tags');
-      setTags(res.data);
-      toast.success('Tag deleted');
-    } catch (e) {
-      toast.error('Failed to delete tag');
-    }
+  var selectTag = async function(tagId) {
+    setSelectedTags(function(prev) {
+      var idx = prev.indexOf(tagId);
+      return idx >= 0
+        ? prev.filter(function(t) { return t !== tagId; })
+        : prev.concat([tagId]);
+    });
+    // try {
+    //   await api.delete('/tags/' + tagId);
+    //   var res = await api.get('/tags');
+    //   setTags(res.data);
+    //   toast.success('Tag deleted');
+    // } catch (e) {
+    //   toast.error('Failed to delete tag');
+    // }
   };
 
   if (loading) {
@@ -372,7 +390,7 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      <TagBadgeList tags={tags} onDeleteTag={deleteTag} />
+      <TagBadgeList tags={tags} selectedTags={selectedTags} onSelectTag={selectTag} />
 
       {tasks.length === 0 ? (
         <Card className="rounded-2xl border border-border" data-testid="empty-tasks">
@@ -384,7 +402,7 @@ export default function TasksPage() {
         </Card>
       ) : (
         <div className="space-y-3" data-testid="tasks-list">
-          {tasks.map(function(task) {
+          {filteredTasks.map(function(task) {
             return (
               <div key={task.id} className="animate-slide-up">
                 <TaskItem

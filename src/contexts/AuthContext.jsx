@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-// import api from '@/lib/api';
+import api from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const res = {} //= await api.post('/auth/login', { email, password });
+    const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('tempo_token', res.data.token);
     localStorage.setItem('tempo_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async (name, email, password) => {
-    const res = {} //= await api.post('/auth/register', { name, email, password });
+    const res = await api.post('/auth/register', { name, email, password });
     localStorage.setItem('tempo_token', res.data.token);
     localStorage.setItem('tempo_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const registerInvite = useCallback(async (token, name, password) => {
-    const res = {} //= await api.post('/auth/register-invite', { token, name, password });
+    const res = await api.post('/auth/register-invite', { token, name, password });
     localStorage.setItem('tempo_token', res.data.token);
     localStorage.setItem('tempo_user', JSON.stringify(res.data.user));
     setUser(res.data.user);

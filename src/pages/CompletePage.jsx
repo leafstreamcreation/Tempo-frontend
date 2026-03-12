@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// import api from '@/lib/api';
+import api from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -192,7 +192,7 @@ export default function CompletePage() {
 
   var fetchTasks = useCallback(async function() {
     try {
-      // var res = await api.get('/tasks');
+      var res = await api.get('/tasks');
       setTasks(res.data);
     } catch (e) {
       console.error(e);
@@ -208,7 +208,7 @@ export default function CompletePage() {
   var handleComplete = async function(taskId, feedback) {
     setCompleting(taskId);
     try {
-      // var res = await api.post('/tasks/' + taskId + '/complete', { feedback: feedback });
+      var res = await api.post('/tasks/' + taskId + '/complete', { feedback: feedback });
       var task = tasks.find(function(t) { return t.id === taskId; });
       var labels = { too_early: 'Too early', just_right: 'Just right', too_late: 'Too late' };
       var taskTitle = task ? task.title : 'Task';
