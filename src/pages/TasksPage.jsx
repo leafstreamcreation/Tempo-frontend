@@ -44,7 +44,7 @@ function TaskTagList({ items }) {
   );
 }
 
-function TaskItem({ taskId, title, description, intervalDays, nextDue, completionCount, tags, isShared, ownerName, onEdit, onDelete, onToggleShared }) {
+function TaskItem({ taskId, title, description, intervalDays, nextDue, completionCount, tags, isShared, isOneTime, ownerName, onEdit, onDelete, onToggleShared }) {
   var border = getStatusBorder(nextDue);
   var isOverdue = isPast(new Date(nextDue));
   var dueText = isOverdue
@@ -66,6 +66,11 @@ function TaskItem({ taskId, title, description, intervalDays, nextDue, completio
               {isShared ? (
                 <Badge variant="outline" className="rounded-full text-[10px] font-heading border-blue-400 text-blue-600 dark:text-blue-400 gap-0.5" data-testid={'shared-indicator-' + taskId}>
                   <Users className="w-3 h-3" /> Shared
+                </Badge>
+              ) : null}
+              {isOneTime ? (
+                <Badge variant="outline" className="rounded-full text-[10px] font-heading border-blue-400 text-blue-600 dark:text-blue-400 gap-0.5" data-testid={'one-time-indicator-' + taskId}>
+                  <Users className="w-3 h-3" /> One-time
                 </Badge>
               ) : null}
             </div>
@@ -256,7 +261,7 @@ export default function TasksPage() {
 
   var openCreate = function() {
     setEditingTask(null);
-    setForm({ title: '', description: '', interval_days: 7, tags: [], is_shared: false });
+    setForm({ title: '', description: '', interval_days: 7, tags: [], is_shared: false, non_recurring: false });
     setDialogOpen(true);
   };
 
@@ -414,6 +419,7 @@ export default function TasksPage() {
                   completionCount={task.completion_count}
                   tags={task.tags}
                   isShared={task.is_shared}
+                  isOneTime={task.non_recurring}
                   ownerName={task.owner_name}
                   onEdit={function() { openEdit(task); }}
                   onDelete={function() { setDeletingTask(task); setDeleteDialogOpen(true); }}
@@ -432,7 +438,7 @@ export default function TasksPage() {
               {editingTask ? 'Edit Task' : 'New Task'}
             </DialogTitle>
             <DialogDescription className="font-body">
-              {editingTask ? 'Update your recurring task details.' : 'Set up a new recurring task.'}
+              {editingTask ? 'Update your recurring task details.' : 'Set up a new task.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
@@ -440,7 +446,7 @@ export default function TasksPage() {
               <Label className="font-heading text-sm font-medium">Title</Label>
               <Input
                 value={form.title}
-                onChange={function(e) { setForm({ title: e.target.value, description: form.description, interval_days: form.interval_days, tags: form.tags, is_shared: form.is_shared }); }}
+                onChange={function(e) { setForm({ title: e.target.value, description: form.description, interval_days: form.interval_days, tags: form.tags, is_shared: form.is_shared, non_recurring: form.non_recurring }); }}
                 placeholder="e.g., Clean kitchen"
                 className="rounded-xl border-2 border-transparent bg-secondary focus:bg-background focus:border-primary transition-all duration-200"
                 data-testid="task-title-input"
@@ -450,42 +456,62 @@ export default function TasksPage() {
               <Label className="font-heading text-sm font-medium">Description (optional)</Label>
               <Input
                 value={form.description}
-                onChange={function(e) { setForm({ title: form.title, description: e.target.value, interval_days: form.interval_days, tags: form.tags, is_shared: form.is_shared }); }}
+                onChange={function(e) { setForm({ title: form.title, description: e.target.value, interval_days: form.interval_days, tags: form.tags, is_shared: form.is_shared, non_recurring: form.non_recurring }); }}
                 placeholder="Any extra details..."
                 className="rounded-xl border-2 border-transparent bg-secondary focus:bg-background focus:border-primary transition-all duration-200"
                 data-testid="task-description-input"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="font-heading text-sm font-medium">Repeat every (days)</Label>
-              <Input
-                type="number"
-                min="1"
-                step="0.5"
-                value={form.interval_days}
-                onChange={function(e) { setForm({ title: form.title, description: form.description, interval_days: parseFloat(e.target.value) || 1, tags: form.tags, is_shared: form.is_shared }); }}
-                className="rounded-xl border-2 border-transparent bg-secondary focus:bg-background focus:border-primary transition-all duration-200"
-                data-testid="task-interval-input"
-              />
-            </div>
+            { !form.non_recurring ? <div className="space-y-2">
+                <Label className="font-heading text-sm font-medium">Repeat every (days)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  value={form.interval_days}
+                  onChange={function(e) { setForm({ title: form.title, description: form.description, interval_days: parseFloat(e.target.value) || 1, tags: form.tags, is_shared: form.is_shared, non_recurring: form.non_recurring }); }}
+                  className="rounded-xl border-2 border-transparent bg-secondary focus:bg-background focus:border-primary transition-all duration-200"
+                  data-testid="task-interval-input"
+                />
+              </div> : null
+            }
             {!editingTask ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary" data-testid="shared-toggle-section">
-                <div className="flex-1">
-                  <p className="text-sm font-heading font-medium flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-blue-500" /> Shared Task
-                  </p>
-                  <p className="text-xs text-muted-foreground font-body">Visible and manageable by all users</p>
+              <div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary" data-testid="shared-toggle-section">
+                  <div className="flex-1">
+                    <p className="text-sm font-heading font-medium flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-blue-500" /> Shared Task
+                    </p>
+                    <p className="text-xs text-muted-foreground font-body">Visible and manageable by all users</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={function() { setForm({ title: form.title, description: form.description, interval_days: form.interval_days, tags: form.tags, is_shared: !form.is_shared, non_recurring: form.non_recurring }); }}
+                    className={'relative w-11 h-6 rounded-full transition-colors duration-200 ' + (form.is_shared ? 'bg-blue-500' : 'bg-muted-foreground/30')}
+                    data-testid="shared-toggle"
+                    aria-label="Toggle shared"
+                  >
+                    <span className={'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ' + (form.is_shared ? 'translate-x-5' : 'translate-x-0')} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={function() { setForm({ title: form.title, description: form.description, interval_days: form.interval_days, tags: form.tags, is_shared: !form.is_shared }); }}
-                  className={'relative w-11 h-6 rounded-full transition-colors duration-200 ' + (form.is_shared ? 'bg-blue-500' : 'bg-muted-foreground/30')}
-                  data-testid="shared-toggle"
-                  aria-label="Toggle shared"
-                >
-                  <span className={'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ' + (form.is_shared ? 'translate-x-5' : 'translate-x-0')} />
-                </button>
-              </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary" data-testid="non-recurring-toggle-section">
+                    <div className="flex-1">
+                      <p className="text-sm font-heading font-medium flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-blue-500" /> One-Time Task
+                      </p>
+                      <p className="text-xs text-muted-foreground font-body">Will disappear after completion</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={function() { setForm({ title: form.title, description: form.description, interval_days: form.non_recurring ? 0 : form.interval_days, tags: form.tags, is_shared: form.is_shared, non_recurring: !form.non_recurring }); }}
+                      className={'relative w-11 h-6 rounded-full transition-colors duration-200 ' + (form.non_recurring ? 'bg-blue-500' : 'bg-muted-foreground/30')}
+                      data-testid="non-recurring-toggle"
+                      aria-label="Toggle non-recurring"
+                    >
+                      <span className={'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ' + (form.non_recurring ? 'translate-x-5' : 'translate-x-0')} />
+                    </button>
+                  </div>
+                </div>
             ) : null}
             <div className="space-y-2">
               <Label className="font-heading text-sm font-medium flex items-center gap-1">
